@@ -1,6 +1,7 @@
 package com.example.bitcoin
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
@@ -19,24 +20,24 @@ import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
-    final val TAG = "AmazonBitcoinWallet"
+    val TAG = "AmazonBitcoinWallet"
 
     // Default to using testnet
-    final val IS_PRODUCTION = false
+    val IS_PRODUCTION = false
 
     private var walletAppKit: WalletAppKit? = null
     private var walletAddress: Address? = null
     private lateinit var sendButton: Button
     private lateinit var receiveButton: Button
-    var mainText: TextView? = null
+    private lateinit var balanceText: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         toast("Loading...")
-        sendButton = findViewById<Button>(R.id.sendButton)
-        receiveButton = findViewById<Button>(R.id.receiveButton)
-
+        sendButton = findViewById(R.id.sendButton)
+        receiveButton = findViewById(R.id.receiveButton)
+        balanceText = findViewById(R.id.balanceText)
         init()
     }
 
@@ -88,9 +89,13 @@ class MainActivity : AppCompatActivity() {
         ).show()
     }
 
+    private fun setText(text: TextView, value: String) {
+        runOnUiThread { text.text = value }
+    }
+
     private fun createWallet() {
         Log.d(TAG, "checking permission")
-        var parameters: NetworkParameters? = if (IS_PRODUCTION) MainNetParams.get() else TestNet3Params.get()
+        val parameters: NetworkParameters? = if (IS_PRODUCTION) MainNetParams.get() else TestNet3Params.get()
         // Download the block chain and wait until it's done.
         Log.d(TAG, "syncing blockchain")
         walletAppKit = WalletAppKit(parameters, cacheDir, "MyWallet")
@@ -107,6 +112,8 @@ class MainActivity : AppCompatActivity() {
                 walletAddress = wallet.freshReceiveAddress()
                 Log.d(TAG, "Wallet Address: $walletAddress")
                 Log.d(TAG, "Balance: ${wallet.balance}")
+                setText(balanceText, "${wallet.balance} sats")
+
                 wallet.addCoinsReceivedEventListener { wallet1: Wallet?, tx: Transaction, prevBalance: Coin?, newBalance: Coin ->
                     Log.d(TAG, "Tx received Balance: ${wallet.balance}")
                     if (tx.purpose == Transaction.Purpose.UNKNOWN) toast(
