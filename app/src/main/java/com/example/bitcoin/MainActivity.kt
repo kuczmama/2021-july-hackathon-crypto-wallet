@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -25,18 +26,29 @@ class MainActivity : AppCompatActivity() {
 
     private var walletAppKit: WalletAppKit? = null
     private var walletAddress: Address? = null
+    private lateinit var sendButton: Button
+    private lateinit var receiveButton: Button
     var mainText: TextView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        mainText = findViewById(R.id.main_text)
         toast("Loading...")
+        sendButton = findViewById<Button>(R.id.sendButton)
+        receiveButton = findViewById<Button>(R.id.receiveButton)
 
         init()
     }
 
     private fun init() {
+        sendButton.setOnClickListener {
+            toast("Send button clicked")
+        }
+
+        receiveButton.setOnClickListener {
+            toast("Receive button clicked!")
+        }
+
         ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 1);
     }
 
