@@ -7,25 +7,16 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import org.bitcoinj.core.*
 import org.bitcoinj.core.listeners.DownloadProgressTracker
-import org.bitcoinj.kits.WalletAppKit
-import org.bitcoinj.params.MainNetParams
-import org.bitcoinj.params.TestNet3Params
 import org.bitcoinj.wallet.Wallet
 import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
     val TAG = "AmazonBitcoinWallet"
-
-    // Default to using testnet
-    val IS_PRODUCTION = false
-
-    private var walletAppKit: WalletAppKit? = null
     private var walletAddress: Address? = null
     private lateinit var sendButton: Button
     private lateinit var receiveButton: Button
@@ -35,7 +26,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        toast("Loading...")
+        Utils.toast(this@MainActivity, "Loading...")
         sendButton = findViewById(R.id.sendButton)
         receiveButton = findViewById(R.id.receiveButton)
         balanceText = findViewById(R.id.balanceText)
@@ -52,7 +43,7 @@ class MainActivity : AppCompatActivity() {
 
         receiveButton.setOnClickListener {
             val intent = Intent(this, ReceiveActivity::class.java).apply {
-                putExtra(Constants.RECEIVE_ADDRESS_KEY.toString(), walletAddress.toString())
+                putExtra(Config.RECEIVE_ADDRESS_KEY.toString(), walletAddress.toString())
             }
 
             startActivity(intent)
@@ -78,23 +69,11 @@ class MainActivity : AppCompatActivity() {
 
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
-                    Toast.makeText(
-                        this@MainActivity,
-                        "Permission denied to read your External storage",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    Utils.toast(this@MainActivity, "Permission denied to read your External storage")
                 }
                 return
             }
         }
-    }
-
-    private fun toast(str: String) {
-        Toast.makeText(
-            this@MainActivity,
-            str,
-            Toast.LENGTH_SHORT
-        ).show()
     }
 
     private fun setText(text: TextView, value: String) {
@@ -103,11 +82,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun createWallet() {
         Log.d(TAG, "checking permission")
-        val parameters: NetworkParameters? = if (IS_PRODUCTION) MainNetParams.get() else TestNet3Params.get()
         // Download the block chain and wait until it's done.
         Log.d(TAG, "syncing blockchain")
-        walletAppKit = WalletAppKit(parameters, cacheDir, "MyWallet")
-        walletAppKit?.setDownloadListener(object : DownloadProgressTracker() {
+        val walletAppKit = WalletAppKitFactory.getInstance(this)
+        walletAppKit.setDownloadListener(object : DownloadProgressTracker() {
             override fun progress(pct: Double, blocksSoFar: Int, date: Date?) {
                 super.progress(pct, blocksSoFar, date)
                 val percentage = pct.toInt()
@@ -129,7 +107,7 @@ class MainActivity : AppCompatActivity() {
 
                 wallet.addCoinsReceivedEventListener { wallet1: Wallet?, tx: Transaction, prevBalance: Coin?, newBalance: Coin ->
                     Log.d(TAG, "Tx received Balance: ${wallet.balance}")
-                    if (tx.purpose == Transaction.Purpose.UNKNOWN) toast(
+                    if (tx.purpose == Transaction.Purpose.UNKNOWN) Utils.toast(this@MainActivity,
                         "Receive " + newBalance.minus(
                             prevBalance
                         ).toFriendlyString()
@@ -137,14 +115,14 @@ class MainActivity : AppCompatActivity() {
                 }
                 wallet.addCoinsSentEventListener { wallet12: Wallet?, tx: Transaction, prevBalance: Coin, newBalance: Coin? ->
                     Log.d(TAG, "Coins sent -- balance:  ${wallet.balance}")
-                    toast(
+                    Utils.toast(this@MainActivity,
                         "Sent " + prevBalance.minus(newBalance).minus(tx.fee)
                             .toFriendlyString()
                     )
                 }
             }
         })
-        walletAppKit?.setBlockingStartup(false)
-        walletAppKit?.startAsync()
+        walletAppKit.setBlockingStartup(false)
+        walletAppKit.startAsync()
     }
 }
