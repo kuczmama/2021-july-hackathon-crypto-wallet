@@ -22,6 +22,7 @@ class MainActivity : AppCompatActivity() {
     final val IS_PRODUCTION = false
     private var parameters: NetworkParameters? = null
     private var walletAppKit: WalletAppKit? = null
+    private var walletAddress: Address? = null
 
     // Only supports legacy addresses
     final val bitcoinAddress = "myxWv5jFrezuxM6gPvAM77jPPQfM3nLvDE"
@@ -95,8 +96,26 @@ class MainActivity : AppCompatActivity() {
 
             override fun doneDownload() {
                 super.doneDownload()
+                val wallet: Wallet = walletAppKit?.wallet()!!
                 Log.d(TAG, "Download complete!")
-
+                walletAddress = wallet.freshReceiveAddress()
+                Log.d(TAG, "Wallet Address: $walletAddress")
+                Log.d(TAG, "Balance: ${wallet.balance}")
+                wallet.addCoinsReceivedEventListener { wallet1: Wallet?, tx: Transaction, prevBalance: Coin?, newBalance: Coin ->
+                    Log.d(TAG, "Tx received Balance: ${wallet.balance}")
+                    if (tx.purpose == Transaction.Purpose.UNKNOWN) toast(
+                        "Receive " + newBalance.minus(
+                            prevBalance
+                        ).toFriendlyString()
+                    )
+                }
+                wallet.addCoinsSentEventListener { wallet12: Wallet?, tx: Transaction, prevBalance: Coin, newBalance: Coin? ->
+                    Log.d(TAG, "Coins sent -- balance:  ${wallet.balance}")
+                    toast(
+                        "Sent " + prevBalance.minus(newBalance).minus(tx.fee)
+                            .toFriendlyString()
+                    )
+                }
             }
         })
         walletAppKit?.setBlockingStartup(false)
