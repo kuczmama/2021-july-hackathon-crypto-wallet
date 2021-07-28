@@ -18,14 +18,13 @@ import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
-    final val TAG = "Bitcoin!!"
+    final val TAG = "AmazonBitcoinWallet"
+
+    // Default to using testnet
     final val IS_PRODUCTION = false
-    private var parameters: NetworkParameters? = null
+
     private var walletAppKit: WalletAppKit? = null
     private var walletAddress: Address? = null
-
-    // Only supports legacy addresses
-    final val bitcoinAddress = "myxWv5jFrezuxM6gPvAM77jPPQfM3nLvDE"
     var mainText: TextView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,10 +37,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun init() {
-        parameters = if (IS_PRODUCTION) MainNetParams.get() else TestNet3Params.get()
-        val forwardingAddress: Address = LegacyAddress.fromBase58(parameters, bitcoinAddress)
-
-        Log.d(TAG, "Forwarding address: $forwardingAddress");
         ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 1);
     }
 
@@ -83,7 +78,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun createWallet() {
         Log.d(TAG, "checking permission")
-        parameters = if (IS_PRODUCTION) MainNetParams.get() else TestNet3Params.get()
+        var parameters: NetworkParameters? = if (IS_PRODUCTION) MainNetParams.get() else TestNet3Params.get()
         // Download the block chain and wait until it's done.
         Log.d(TAG, "syncing blockchain")
         walletAppKit = WalletAppKit(parameters, cacheDir, "MyWallet")
@@ -93,7 +88,6 @@ class MainActivity : AppCompatActivity() {
                 val percentage = pct.toInt()
                 Log.d(TAG, "percentage synced: $percentage")
             }
-
             override fun doneDownload() {
                 super.doneDownload()
                 val wallet: Wallet = walletAppKit?.wallet()!!
@@ -120,7 +114,5 @@ class MainActivity : AppCompatActivity() {
         })
         walletAppKit?.setBlockingStartup(false)
         walletAppKit?.startAsync()
-
-
     }
 }
