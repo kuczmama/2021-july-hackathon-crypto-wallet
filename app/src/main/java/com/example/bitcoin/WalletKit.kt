@@ -16,8 +16,7 @@ class WalletAppKitFactory {
         }
 
         private fun buildWalletAppKit(context: Context): WalletAppKit {
-            val IS_PRODUCTION = false
-            val parameters: NetworkParameters? = if (IS_PRODUCTION) MainNetParams.get() else TestNet3Params.get()
+            val parameters: NetworkParameters? = if (Config.IS_PRODUCTION) MainNetParams.get() else TestNet3Params.get()
             return WalletAppKit(parameters, context.cacheDir, "MyWallet")
         }
     }
