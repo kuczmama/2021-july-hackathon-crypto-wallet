@@ -20,14 +20,49 @@
         android:layout_height="wrap_content"
         android:text="Address" />
 
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
     <EditText
         android:id="@+id/sendAddress"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="10dp"
         android:inputType="text"
+        android:paddingEnd = "40dp"
+        android:paddingRight = "40dp"
         android:text="tb1q38j69kv276lq80709scpqv54jkxn78x0krks9r"
         android:hint="0x123..." />
+
+    <ImageView
+        android:id="@+id/scannerBtn"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:paddingRight = "10dp"
+        android:layout_alignEnd="@id/sendAddress"
+        android:layout_alignRight="@id/sendAddress"
+        android:src="@drawable/ic_camera"
+        />
+
+        <com.budiyev.android.codescanner.CodeScannerView
+            android:id="@+id/scanner_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            app:autoFocusButtonColor="@android:color/white"
+            app:autoFocusButtonVisible="true"
+            app:flashButtonColor="@android:color/white"
+            app:flashButtonVisible="true"
+            app:frameColor="@android:color/white"
+            app:frameCornersSize="50dp"
+            app:frameCornersRadius="0dp"
+            app:frameAspectRatioWidth="1"
+            app:frameAspectRatioHeight="1"
+            app:frameSize="0.75"
+            app:frameThickness="2dp"
+            app:maskColor="#77000000"/>
+
+    </RelativeLayout>
 
     <TextView
         android:layout_width="match_parent"

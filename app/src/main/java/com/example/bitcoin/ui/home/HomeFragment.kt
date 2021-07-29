@@ -1,55 +1,66 @@
-package com.example.bitcoin
+package com.example.bitcoin.ui.home
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import org.bitcoinj.core.*
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import com.example.bitcoin.*
+import com.example.bitcoin.databinding.FragmentHomeBinding
+import org.bitcoinj.core.Address
+import org.bitcoinj.core.Coin
+import org.bitcoinj.core.Transaction
 import org.bitcoinj.core.listeners.DownloadProgressTracker
+import org.bitcoinj.utils.BriefLogFormatter.init
 import org.bitcoinj.wallet.Wallet
 import java.util.*
 
+class HomeFragment : Fragment() {
 
-class MainActivity : AppCompatActivity() {
+    // This property is only valid between onCreateView and
+    // onDestroyView.
+    private lateinit var homeViewModel: HomeViewModel
+    private var _binding: FragmentHomeBinding? = null
+    private val binding get() = _binding!!
+
     val TAG = "AmazonBitcoinWallet"
     private var walletAddress: Address? = null
-    private lateinit var sendButton: Button
-    private lateinit var receiveButton: Button
     private lateinit var balanceText: TextView
 
+    private lateinit var root: View
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        Utils.toast(this@MainActivity, "Loading...")
-        sendButton = findViewById(R.id.sendButton)
-        receiveButton = findViewById(R.id.receiveButton)
-        balanceText = findViewById(R.id.balanceText)
-        init()
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+
+        homeViewModel =
+            ViewModelProvider(this).get(HomeViewModel::class.java)
+
+        _binding = FragmentHomeBinding.inflate(inflater, container, false)
+        root = binding.root
+
+
+        Utils.toast(root.context, "Loading...")
+        balanceText = root.findViewById(R.id.balanceText)
+        init(root)
+
+        return root
     }
 
-    private fun init() {
-        sendButton.isEnabled = true
-        receiveButton.isEnabled = true
-        sendButton.setOnClickListener {
-            val intent = Intent(this, SendActivity::class.java)
-            startActivity(intent)
-        }
-
-        receiveButton.setOnClickListener {
-            val intent = Intent(this, ReceiveActivity::class.java).apply {
-                putExtra(Config.RECEIVE_ADDRESS_KEY.toString(), walletAddress.toString())
-            }
-
-            startActivity(intent)
-        }
-
-        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 1);
+    private fun init(root: View)  {
+        //ActivityCompat.requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 1);
     }
 
     override fun onRequestPermissionsResult(
@@ -69,7 +80,7 @@ class MainActivity : AppCompatActivity() {
 
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
-                    Utils.toast(this@MainActivity, "Permission denied to read your External storage")
+                   // Utils.toast(, "Permission denied to read your External storage")
                 }
                 return
             }
@@ -77,14 +88,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setText(text: TextView, value: String) {
-        runOnUiThread { text.text = value }
+        getActivity()?.runOnUiThread { text.text = value }
     }
 
     private fun createWallet() {
         Log.d(TAG, "checking permission")
         // Download the block chain and wait until it's done.
         Log.d(TAG, "syncing blockchain")
-        val walletAppKit = WalletAppKitFactory.getInstance(this)
+        val walletAppKit = WalletAppKitFactory.getInstance(root.context)
         walletAppKit.setDownloadListener(object : DownloadProgressTracker() {
             override fun progress(pct: Double, blocksSoFar: Int, date: Date?) {
                 super.progress(pct, blocksSoFar, date)
@@ -99,15 +110,13 @@ class MainActivity : AppCompatActivity() {
                 Log.d(TAG, "Wallet Address: $walletAddress")
                 Log.d(TAG, "Balance: ${wallet.balance}")
 
-                runOnUiThread {
+                getActivity()?.runOnUiThread {
                     balanceText.text = "${wallet.balance} sats"
-                    sendButton.isEnabled = true
-                    receiveButton.isEnabled = true
                 }
 
                 wallet.addCoinsReceivedEventListener { wallet1: Wallet?, tx: Transaction, prevBalance: Coin?, newBalance: Coin ->
                     Log.d(TAG, "Tx received Balance: ${wallet.balance}")
-                    if (tx.purpose == Transaction.Purpose.UNKNOWN) Utils.toast(this@MainActivity,
+                    if (tx.purpose == Transaction.Purpose.UNKNOWN) Utils.toast(root.context,
                         "Receive " + newBalance.minus(
                             prevBalance
                         ).toFriendlyString()
@@ -115,7 +124,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 wallet.addCoinsSentEventListener { wallet12: Wallet?, tx: Transaction, prevBalance: Coin, newBalance: Coin? ->
                     Log.d(TAG, "Coins sent -- balance:  ${wallet.balance}")
-                    Utils.toast(this@MainActivity,
+                    Utils.toast(root.context,
                         "Sent " + prevBalance.minus(newBalance).minus(tx.fee)
                             .toFriendlyString()
                     )
@@ -124,5 +133,11 @@ class MainActivity : AppCompatActivity() {
         })
         walletAppKit.setBlockingStartup(false)
         walletAppKit.startAsync()
+    }
+
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

@@ -1,20 +1,23 @@
-package com.example.bitcoin
+package com.example.bitcoin.ui.send
 
 import android.os.Bundle
 import android.text.TextUtils
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageView
-import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import android.view.ViewGroup
+import android.widget.*
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import com.budiyev.android.codescanner.AutoFocusMode
 import com.budiyev.android.codescanner.CodeScanner
 import com.budiyev.android.codescanner.CodeScannerView
 import com.budiyev.android.codescanner.DecodeCallback
 import com.budiyev.android.codescanner.ErrorCallback
 import com.budiyev.android.codescanner.ScanMode
+import com.example.bitcoin.*
+import com.example.bitcoin.databinding.FragmentSendBinding
 import org.bitcoinj.core.Address
 import org.bitcoinj.core.Coin
 import org.bitcoinj.core.InsufficientMoneyException
@@ -23,32 +26,47 @@ import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.params.TestNet3Params
 import org.bitcoinj.wallet.SendRequest
 
+class SendFragment : Fragment() {
 
-class SendActivity : AppCompatActivity() {
+    // This property is only valid between onCreateView and
+    // onDestroyView.
+    private lateinit var sendViewModel: SendViewModel
+    private var _binding: FragmentSendBinding? = null
+    private val binding get() = _binding!!
+
     private val TAG: String = SendActivity::class.simpleName!!
 
     private lateinit var sendAddress: EditText
     private lateinit var sendAmount: EditText
     private lateinit var sendButton: Button
+    private lateinit var root: View
 
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_send)
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        sendViewModel =
+            ViewModelProvider(this).get(SendViewModel::class.java)
 
-        sendAddress = findViewById(R.id.sendAddress)
-        sendAmount = findViewById(R.id.sendAmount)
-        sendButton = findViewById(R.id.sendButton)
+        _binding = FragmentSendBinding.inflate(inflater, container, false)
+         root = binding.root
+
+
+        sendAddress = root.findViewById(R.id.sendAddress)
+        sendAmount = root.findViewById(R.id.sendAmount)
+        sendButton = root.findViewById(R.id.sendButton)
 
         sendButton.setOnClickListener {
             Log.d(TAG, "Send button clicked amount = ${sendAmount.text} address = ${sendAddress.text}")
             send(sendAmount.text.toString().toLong(), sendAddress.text.toString())
         }
 
-        val mScanBtn: ImageView = findViewById(R.id.scannerBtn);
-        val mQRCodeScanner = findViewById<CodeScannerView>(R.id.scanner_view);
+        val mScanBtn: ImageView = root.findViewById(R.id.scannerBtn);
+        val mQRCodeScanner = root.findViewById<CodeScannerView>(R.id.scanner_view);
 
-        var codeScanner: CodeScanner = CodeScanner(this, mQRCodeScanner)
+        var codeScanner: CodeScanner = CodeScanner(root.context, mQRCodeScanner)
 
         // Parameters (default values)
         codeScanner.camera = CodeScanner.CAMERA_BACK // or CAMERA_FRONT or specific camera id
@@ -61,8 +79,8 @@ class SendActivity : AppCompatActivity() {
 
         // Callbacks
         codeScanner.decodeCallback = DecodeCallback {
-            runOnUiThread {
-                Toast.makeText(this, "Scan result: ${it.text}", Toast.LENGTH_LONG).show()
+            getActivity()?.runOnUiThread {
+                Toast.makeText(root.context, "Scan result: ${it.text}", Toast.LENGTH_LONG).show()
 
                 sendAddress.setText("${it.text}")
 
@@ -70,8 +88,8 @@ class SendActivity : AppCompatActivity() {
             }
         }
         codeScanner.errorCallback = ErrorCallback { // or ErrorCallback.SUPPRESS
-            runOnUiThread {
-                Toast.makeText(this, "Camera initialization error: ${it.message}",
+            getActivity()?.runOnUiThread {
+                Toast.makeText(root.context, "Camera initialization error: ${it.message}",
                     Toast.LENGTH_LONG).show()
             }
         }
@@ -87,23 +105,23 @@ class SendActivity : AppCompatActivity() {
             mQRCodeScanner.visibility = View.GONE
         }
 
-
+        return root;
     }
 
     fun send(amount: Long, to: String) {
         if (TextUtils.isEmpty(to)) {
-            Utils.toast(this@SendActivity, "Select Recipient")
+            Utils.toast(root.context, "Select Recipient")
             return
         }
         if (amount <= 0) {
-            Utils.toast(this@SendActivity, "Select valid amount")
+            Utils.toast(root.context, "Select valid amount")
             return
         }
-        val walletAppKit = WalletAppKitFactory.getInstance(this)
+        val walletAppKit = WalletAppKitFactory.getInstance(root.context)
         val coinAmount = Coin.valueOf(amount)
         if (walletAppKit.wallet().balance.isLessThan(coinAmount)) {
-            Utils.toast(this@SendActivity, "You don't have enough bitcoin!")
-            runOnUiThread {
+            Utils.toast(root.context, "You don't have enough bitcoin!")
+            getActivity()?.runOnUiThread {
                 sendAmount.text.clear()
             }
             return
@@ -121,7 +139,12 @@ class SendActivity : AppCompatActivity() {
             walletAppKit.peerGroup().broadcastTransaction(request.tx).broadcast()
         } catch (e: InsufficientMoneyException) {
             e.printStackTrace()
-            Utils.toast(this@SendActivity, e.toString())
+            Utils.toast(root.context, e.toString())
         }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }
