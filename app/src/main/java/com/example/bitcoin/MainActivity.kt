@@ -16,7 +16,7 @@ import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
-    val TAG = "AmazonBitcoinWallet"
+    val TAG = MainActivity::class.simpleName
     private var walletAddress: Address? = null
     private lateinit var sendButton: Button
     private lateinit var receiveButton: Button

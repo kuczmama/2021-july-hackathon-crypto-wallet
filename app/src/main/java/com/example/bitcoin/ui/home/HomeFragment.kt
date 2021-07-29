@@ -32,7 +32,7 @@ class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
-    val TAG = "AmazonBitcoinWallet"
+    val TAG = HomeFragment::class.simpleName
     private var walletAddress: Address? = null
     private lateinit var balanceText: TextView
 

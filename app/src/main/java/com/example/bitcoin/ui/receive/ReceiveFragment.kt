@@ -21,7 +21,7 @@ import com.google.zxing.WriterException
 class ReceiveFragment : Fragment() {
     // This property is only valid between onCreateView and
     // onDestroyView.
-    val TAG = "ReceiveFragment"
+    val TAG = ReceiveFragment::class.simpleName
     private var _binding: FragmentReceiveBinding? = null
     private val binding get() = _binding!!
 

@@ -33,7 +33,7 @@ class SendFragment : Fragment() {
     private var _binding: FragmentSendBinding? = null
     private val binding get() = _binding!!
 
-    private val TAG: String = SendActivity::class.simpleName!!
+    private val TAG: String = SendFragment::class.simpleName!!
 
     private lateinit var sendAddress: EditText
     private lateinit var sendAmount: EditText
