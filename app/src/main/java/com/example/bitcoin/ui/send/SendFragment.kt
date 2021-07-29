@@ -20,6 +20,7 @@ import org.bitcoinj.core.Address
 import org.bitcoinj.core.Coin
 import org.bitcoinj.core.InsufficientMoneyException
 import org.bitcoinj.core.NetworkParameters
+import org.bitcoinj.kits.WalletAppKit
 import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.params.TestNet3Params
 import org.bitcoinj.wallet.SendRequest
@@ -38,7 +39,10 @@ class SendFragment : Fragment() {
     private lateinit var sendAddress: EditText
     private lateinit var sendAmount: EditText
     private lateinit var sendButton: Button
+    private lateinit var sendBalance: TextView
     private lateinit var root: View
+    private lateinit var walletAppKit: WalletAppKit
+    private lateinit var wallet: Wallet
 
 
     override fun onCreateView(
@@ -50,10 +54,15 @@ class SendFragment : Fragment() {
         _binding = FragmentSendBinding.inflate(inflater, container, false)
          root = binding.root
 
-
         sendAddress = root.findViewById(R.id.sendAddress)
         sendAmount = root.findViewById(R.id.sendAmount)
         sendButton = root.findViewById(R.id.sendButton)
+        sendBalance = root.findViewById(R.id.sendBalance)
+
+        walletAppKit = WalletAppKitFactory.getInstance(root.context)
+        wallet = walletAppKit.wallet()
+
+        sendBalance.text = wallet.balance.toFriendlyString()
 
         sendButton.setOnClickListener {
             Log.d(TAG, "Send button clicked amount = ${sendAmount.text} address = ${sendAddress.text}")
@@ -105,7 +114,7 @@ class SendFragment : Fragment() {
         return root;
     }
 
-    fun send(amount: Long, to: String) {
+    private fun send(amount: Long, to: String) {
         if (TextUtils.isEmpty(to)) {
             Utils.toast(root.context, "Select Recipient")
             return
@@ -114,8 +123,6 @@ class SendFragment : Fragment() {
             Utils.toast(root.context, "Select valid amount")
             return
         }
-        val walletAppKit = WalletAppKitFactory.getInstance(root.context)
-        val wallet: Wallet = walletAppKit.wallet()
         val coinAmount = Coin.valueOf(amount)
         if (walletAppKit.wallet().balance.isLessThan(coinAmount)) {
             Utils.toast(root.context, "You don't have enough bitcoin!")
