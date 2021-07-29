@@ -8,8 +8,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
 import com.budiyev.android.codescanner.AutoFocusMode
 import com.budiyev.android.codescanner.CodeScanner
 import com.budiyev.android.codescanner.CodeScannerView
@@ -25,6 +23,8 @@ import org.bitcoinj.core.NetworkParameters
 import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.params.TestNet3Params
 import org.bitcoinj.wallet.SendRequest
+import org.bitcoinj.wallet.Wallet
+import java.lang.Error
 
 class SendFragment : Fragment() {
 
@@ -46,7 +46,7 @@ class SendFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-
+        Log.d(TAG, "Creating send Fragment")
         _binding = FragmentSendBinding.inflate(inflater, container, false)
          root = binding.root
 
@@ -115,6 +115,7 @@ class SendFragment : Fragment() {
             return
         }
         val walletAppKit = WalletAppKitFactory.getInstance(root.context)
+        val wallet: Wallet = walletAppKit.wallet()
         val coinAmount = Coin.valueOf(amount)
         if (walletAppKit.wallet().balance.isLessThan(coinAmount)) {
             Utils.toast(root.context, "You don't have enough bitcoin!")
@@ -123,22 +124,30 @@ class SendFragment : Fragment() {
             }
             return
         }
-        // todo set a minimum transaction amount
-
         val parameters: NetworkParameters? = if (Config.IS_PRODUCTION) MainNetParams.get() else TestNet3Params.get()
 
         val toAddress: Address = Address.fromString(parameters, sendAddress.text.toString())
         val request =
             SendRequest.to(toAddress, coinAmount)
         try {
-            walletAppKit.wallet().completeTx(request)
-            walletAppKit.wallet().commitTx(request.tx)
+            wallet.completeTx(request)
+            wallet.commitTx(request.tx)
             walletAppKit.peerGroup().broadcastTransaction(request.tx).broadcast()
         } catch (e: InsufficientMoneyException) {
             e.printStackTrace()
             Utils.toast(root.context, e.toString())
+            return
+        } catch (e: Wallet.DustySendRequested) {
+            Log.i(TAG, "Dusty send requested... insufficient funds", e)
+            Utils.toast(root.context, "Dusty send requested... insufficient funds")
+            return
+        } catch (e: Error) {
+            Log.wtf(TAG, "Something terrible happened!!", e)
+            Utils.toast(root.context, "Something horrible went wrong! Try again")
+            return
         }
-    }
+        Utils.toast(root.context, "Successfully sent Bitcoin")
+     }
 
     override fun onDestroyView() {
         super.onDestroyView()
