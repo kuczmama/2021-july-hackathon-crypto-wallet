@@ -29,7 +29,6 @@ class HomeFragment : Fragment() {
 
     // This property is only valid between onCreateView and
     // onDestroyView.
-    private lateinit var homeViewModel: HomeViewModel
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
@@ -45,22 +44,22 @@ class HomeFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
 
-        homeViewModel =
-            ViewModelProvider(this).get(HomeViewModel::class.java)
-
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         root = binding.root
 
-
         Utils.toast(root.context, "Loading...")
         balanceText = root.findViewById(R.id.balanceText)
-        init(root)
+        init()
 
         return root
     }
 
-    private fun init(root: View)  {
-        //ActivityCompat.requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 1);
+    private fun init()  {
+        // There is some issues getting permission from fragment
+        // until then we can just manually give permission
+        createWallet()
+
+        getActivity()?.let { ActivityCompat.requestPermissions(it,arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 1) };
     }
 
     override fun onRequestPermissionsResult(
@@ -75,7 +74,7 @@ class HomeFragment : Fragment() {
                 if (grantResults[0] === PackageManager.PERMISSION_GRANTED
                 ) {
                     Log.d(TAG, "permission granted!")
-                    createWallet()
+                    //createWallet()
                 } else {
 
                     // permission denied, boo! Disable the
@@ -96,6 +95,7 @@ class HomeFragment : Fragment() {
         // Download the block chain and wait until it's done.
         Log.d(TAG, "syncing blockchain")
         val walletAppKit = WalletAppKitFactory.getInstance(root.context)
+
         walletAppKit.setDownloadListener(object : DownloadProgressTracker() {
             override fun progress(pct: Double, blocksSoFar: Int, date: Date?) {
                 super.progress(pct, blocksSoFar, date)

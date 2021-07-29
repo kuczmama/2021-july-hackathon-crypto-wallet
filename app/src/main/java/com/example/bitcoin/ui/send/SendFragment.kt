@@ -30,7 +30,6 @@ class SendFragment : Fragment() {
 
     // This property is only valid between onCreateView and
     // onDestroyView.
-    private lateinit var sendViewModel: SendViewModel
     private var _binding: FragmentSendBinding? = null
     private val binding get() = _binding!!
 
@@ -47,8 +46,6 @@ class SendFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        sendViewModel =
-            ViewModelProvider(this).get(SendViewModel::class.java)
 
         _binding = FragmentSendBinding.inflate(inflater, container, false)
          root = binding.root

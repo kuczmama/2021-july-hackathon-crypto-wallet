@@ -22,7 +22,6 @@ class ReceiveFragment : Fragment() {
     // This property is only valid between onCreateView and
     // onDestroyView.
     val TAG = "ReceiveFragment"
-    private lateinit var receiveViewModel: ReceiveViewModel
     private var _binding: FragmentReceiveBinding? = null
     private val binding get() = _binding!!
 
@@ -33,8 +32,6 @@ class ReceiveFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        receiveViewModel =
-            ViewModelProvider(this).get(ReceiveViewModel::class.java)
 
         _binding = FragmentReceiveBinding.inflate(inflater, container, false)
         val root: View = binding.root
