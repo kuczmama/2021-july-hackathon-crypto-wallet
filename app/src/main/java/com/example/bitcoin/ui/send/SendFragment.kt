@@ -49,7 +49,7 @@ class SendFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         Log.d(TAG, "Creating send Fragment")
         _binding = FragmentSendBinding.inflate(inflater, container, false)
          root = binding.root
@@ -64,15 +64,10 @@ class SendFragment : Fragment() {
 
         sendBalance.text = wallet.balance.toFriendlyString()
 
-        sendButton.setOnClickListener {
-            Log.d(TAG, "Send button clicked amount = ${sendAmount.text} address = ${sendAddress.text}")
-            send(sendAmount.text.toString().toLong(), sendAddress.text.toString())
-        }
+        val mScanBtn: ImageView = root.findViewById(R.id.scannerBtn)
+        val mQRCodeScanner = root.findViewById<CodeScannerView>(R.id.scanner_view)
 
-        val mScanBtn: ImageView = root.findViewById(R.id.scannerBtn);
-        val mQRCodeScanner = root.findViewById<CodeScannerView>(R.id.scanner_view);
-
-        var codeScanner: CodeScanner = CodeScanner(root.context, mQRCodeScanner)
+        val codeScanner = CodeScanner(root.context, mQRCodeScanner)
 
         // Parameters (default values)
         codeScanner.camera = CodeScanner.CAMERA_BACK // or CAMERA_FRONT or specific camera id
@@ -85,16 +80,16 @@ class SendFragment : Fragment() {
 
         // Callbacks
         codeScanner.decodeCallback = DecodeCallback {
-            getActivity()?.runOnUiThread {
+            activity?.runOnUiThread {
                 Toast.makeText(root.context, "Scan result: ${it.text}", Toast.LENGTH_LONG).show()
 
-                sendAddress.setText("${it.text}")
+                sendAddress.setText(it.text)
 
                 mQRCodeScanner.visibility = View.GONE
             }
         }
         codeScanner.errorCallback = ErrorCallback { // or ErrorCallback.SUPPRESS
-            getActivity()?.runOnUiThread {
+            activity?.runOnUiThread {
                 Toast.makeText(root.context, "Camera initialization error: ${it.message}",
                     Toast.LENGTH_LONG).show()
             }
@@ -111,7 +106,16 @@ class SendFragment : Fragment() {
             mQRCodeScanner.visibility = View.GONE
         }
 
-        return root;
+        sendButton.setOnClickListener {
+            Log.d(TAG, "Send button clicked amount = ${sendAmount.text} address = ${sendAddress.text}")
+            if (TextUtils.isEmpty(sendAmount.text.toString()) || !TextUtils.isDigitsOnly(sendAmount.text.toString())) {
+                Utils.toast(root.context, "Send amount must be greater than 0")
+            } else {
+                send(sendAmount.text.toString().toLong(), sendAddress.text.toString())
+            }
+        }
+
+        return root
     }
 
     private fun send(amount: Long, to: String) {
@@ -126,7 +130,7 @@ class SendFragment : Fragment() {
         val coinAmount = Coin.valueOf(amount)
         if (walletAppKit.wallet().balance.isLessThan(coinAmount)) {
             Utils.toast(root.context, "You don't have enough bitcoin!")
-            getActivity()?.runOnUiThread {
+            activity?.runOnUiThread {
                 sendAmount.text.clear()
             }
             return
