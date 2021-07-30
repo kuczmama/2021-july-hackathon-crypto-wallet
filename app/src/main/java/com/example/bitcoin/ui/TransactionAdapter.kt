@@ -61,6 +61,7 @@ class TransactionAdapter(
         txImage.setImageResource(R.drawable.ic_arrow_up)
         if (transaction.isPending) {
             messageText = "Pending"
+            txImage.setImageResource(R.drawable.ic_pending)
         } else if (txAmount.isNegative) {
             messageText = "Sent"
             txImage.setImageResource(R.drawable.ic_arrow_down)

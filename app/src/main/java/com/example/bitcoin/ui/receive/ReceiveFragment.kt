@@ -15,8 +15,10 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.bitcoin.R
+import com.example.bitcoin.WalletAppKitFactory
 import com.example.bitcoin.databinding.FragmentReceiveBinding
 import com.google.zxing.WriterException
+import org.bitcoinj.wallet.Wallet
 
 class ReceiveFragment : Fragment() {
     // This property is only valid between onCreateView and
@@ -38,11 +40,13 @@ class ReceiveFragment : Fragment() {
 
         val qrCodeImage: ImageView = root.findViewById(R.id.qr_code)
 
+        val wallet: Wallet = WalletAppKitFactory.getInstance(root.context).wallet()
+
         // TODO Make them dynamic size instead of static
         val width: Int = 500
         val height: Int = 500
-        var dimension = if (width < height) width else height
-        var publicKey  = "1E99423A4ED27608A15A2616A2B0E9E52CED330AC530EDCC32C8FFC6A526AEDD"
+        val dimension = if (width < height) width else height
+        val publicKey  = wallet.freshReceiveAddress().toString()
 
         val qrgEncoder = QRGEncoder(publicKey, null, QRGContents.Type.TEXT, dimension)
         qrgEncoder.colorBlack = Color.WHITE
@@ -58,7 +62,7 @@ class ReceiveFragment : Fragment() {
         }
 
 
-        var tvPublicKey: TextView = root.findViewById(R.id.tv_key)
+        val tvPublicKey: TextView = root.findViewById(R.id.tv_key)
         tvPublicKey.text = publicKey
 
         return root
