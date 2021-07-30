@@ -1,19 +1,21 @@
 package com.example.bitcoin.ui.home
 
 import android.Manifest
-import android.app.Activity
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ListView
 import android.widget.TextView
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
-import com.example.bitcoin.*
+import com.example.bitcoin.R
+import com.example.bitcoin.Utils
+import com.example.bitcoin.WalletAppKitFactory
 import com.example.bitcoin.databinding.FragmentHomeBinding
+import com.example.bitcoin.ui.TransactionAdapter
 import org.bitcoinj.core.Address
 import org.bitcoinj.core.Coin
 import org.bitcoinj.core.Transaction
@@ -31,8 +33,10 @@ class HomeFragment : Fragment() {
     val TAG = HomeFragment::class.simpleName
     private var walletAddress: Address? = null
     private lateinit var balanceText: TextView
+    private lateinit var wallet: Wallet
 
     private lateinit var root: View
+    private lateinit var transactionsListView: ListView
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -43,6 +47,7 @@ class HomeFragment : Fragment() {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         root = binding.root
         balanceText = root.findViewById(R.id.balanceText)
+        transactionsListView = root.findViewById(R.id.transactionsListView)
         init()
 
         return root
@@ -52,7 +57,6 @@ class HomeFragment : Fragment() {
         // There is some issues getting permission from fragment
         // until then we can just manually give permission
         createWallet()
-
         getActivity()?.let { ActivityCompat.requestPermissions(it,arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 1) };
     }
 
@@ -80,6 +84,15 @@ class HomeFragment : Fragment() {
         }
     }
 
+    private fun renderTransactions() {
+        Log.d(TAG, "Rendering transactions")
+        val adapter = TransactionAdapter(
+            root.context,
+            wallet,
+            wallet.transactionsByTime)
+        transactionsListView.adapter = adapter
+    }
+
     private fun createWallet() {
         Log.d(TAG, "checking permission")
         // Download the block chain and wait until it's done.
@@ -88,7 +101,9 @@ class HomeFragment : Fragment() {
 
         if (walletAppKit.isRunning) {
             Log.d(TAG, "Wallet app kit is already created and running, don't recreate")
-            balanceText.text = walletAppKit.wallet().balance.toFriendlyString()
+            wallet = walletAppKit.wallet()
+            balanceText.text = wallet.balance.toFriendlyString()
+            renderTransactions()
             return
         }
         Utils.toast(root.context, "Syncing blockchain..")
@@ -100,14 +115,16 @@ class HomeFragment : Fragment() {
             }
             override fun doneDownload() {
                 super.doneDownload()
-                val wallet: Wallet = walletAppKit?.wallet()!!
+                wallet = walletAppKit.wallet()
+
                 Log.d(TAG, "Download complete!")
                 walletAddress = wallet.freshReceiveAddress()
                 Log.d(TAG, "Wallet Address: $walletAddress")
                 Log.d(TAG, "Balance: ${wallet.balance.toFriendlyString()}")
 
-                getActivity()?.runOnUiThread {
+                activity?.runOnUiThread {
                     balanceText.text = wallet.balance.toFriendlyString()
+                    renderTransactions()
                 }
 
                 wallet.addCoinsReceivedEventListener { wallet1: Wallet?, tx: Transaction, prevBalance: Coin?, newBalance: Coin ->
