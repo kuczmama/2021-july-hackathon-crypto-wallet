@@ -99,10 +99,6 @@ class HomeFragment : Fragment() {
         Log.d(TAG, "syncing blockchain")
         val walletAppKit = WalletAppKitFactory.getInstance(root.context)
 
-        Utils.showNotification(root.context,
-            "Send Successful",
-            "Sent 5 BTC to Your best friend!")
-
         if (walletAppKit.isRunning) {
             Log.d(TAG, "Wallet app kit is already created and running, don't recreate")
             wallet = walletAppKit.wallet()
