@@ -118,6 +118,17 @@ class SendFragment : Fragment() {
         return root
     }
 
+    /**
+     * Parse between bitcoin addressed and bitcoin cash addresses
+     */
+    private fun parseAddress(address: String): String {
+        return if(address.startsWith("bitcoin:") || address.startsWith("bitcoincash:")) {
+            address.split(":")[1]
+        } else {
+            address
+        }
+    }
+
     private fun send(amount: Long, to: String) {
         if (TextUtils.isEmpty(to)) {
             Utils.toast(root.context, "Select Recipient")
@@ -137,7 +148,7 @@ class SendFragment : Fragment() {
         }
         val parameters: NetworkParameters? = if (Config.IS_PRODUCTION) MainNetParams.get() else TestNet3Params.get()
 
-        val toAddress: Address = Address.fromString(parameters, sendAddress.text.toString())
+        val toAddress: Address = Address.fromString(parameters, parseAddress(sendAddress.text.toString()))
         val request =
             SendRequest.to(toAddress, coinAmount)
         try {
