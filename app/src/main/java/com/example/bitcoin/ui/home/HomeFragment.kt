@@ -11,13 +11,10 @@ import android.widget.ListView
 import android.widget.TextView
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
-import com.example.bitcoin.Constants.BTC_IN_SATOSHIS
-import com.example.bitcoin.Constants.SUBSCRIBE_COINBASE_SCRIPT
-import com.example.bitcoin.Constants.UNSUBSCRIBE_COINBASE_SCRIPT
-import com.example.bitcoin.Constants.WEB_SOCKET_URL
 import com.example.bitcoin.R
 import com.example.bitcoin.Utils
 import com.example.bitcoin.WalletAppKitFactory
+import com.example.bitcoin.WebsocketHelper
 import com.example.bitcoin.databinding.FragmentHomeBinding
 import com.example.bitcoin.ui.BitcoinPriceAdapter
 import com.example.bitcoin.ui.TransactionAdapter
@@ -29,12 +26,7 @@ import org.bitcoinj.core.Transaction
 import org.bitcoinj.core.listeners.DownloadProgressTracker
 import org.bitcoinj.wallet.Wallet
 import org.java_websocket.client.WebSocketClient
-import org.java_websocket.exceptions.WebsocketNotConnectedException
-import org.java_websocket.handshake.ServerHandshake
-import java.lang.Exception
-import java.net.URI
 import java.util.*
-import javax.net.ssl.SSLSocketFactory
 
 class HomeFragment : Fragment() {
 
@@ -43,11 +35,6 @@ class HomeFragment : Fragment() {
     // Fragment binding
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
-
-
-    // WebSocket
-    private var socketStatus:String? = null
-    private lateinit var socketClient: WebSocketClient
 
     // Waller
     private var walletAddress: Address? = null
@@ -73,7 +60,6 @@ class HomeFragment : Fragment() {
         transactionsListView = root.findViewById(R.id.transactionsListView)
 
         init()
-
         return root
     }
 
@@ -124,6 +110,13 @@ class HomeFragment : Fragment() {
         transactionsListView.adapter = adapter
     }
 
+    val priceListener = object: WebsocketHelper.Companion.Listener {
+        override fun onMessage(message: String) {
+            Log.d(TAG, message)
+            setUpBtcPriceText(message)
+        }
+    }
+
     private fun createWallet() {
         Log.d(TAG, "checking permission")
         // Download the block chain and wait until it's done.
@@ -138,7 +131,7 @@ class HomeFragment : Fragment() {
 
             balanceText.text = wallet.balance.toFriendlyString()
             renderTransactions()
-            initWebSocket()
+            WebsocketHelper.create(priceListener)
             return
         }
         Utils.toast(root.context, "Syncing blockchain..")
@@ -165,7 +158,7 @@ class HomeFragment : Fragment() {
 
 
                 satoshis = wallet.getBalance().getValue().toInt()
-                initWebSocket()
+                WebsocketHelper.create(priceListener)
 
                 wallet.addCoinsReceivedEventListener { wallet1: Wallet?, tx: Transaction, prevBalance: Coin?, newBalance: Coin ->
                     Log.d(TAG, "Tx received Balance: ${wallet.balance}")
@@ -193,47 +186,6 @@ class HomeFragment : Fragment() {
 
     }
 
-    // Initializing WebSocket
-    private fun initWebSocket() {
-        val coinbaseUri: URI? = URI(WEB_SOCKET_URL)
-        Log.d(TAG, "Create Socket")
-        createWebSocket(coinbaseUri)
-
-        socketStatus = "Connected"
-
-        val socketFactory: SSLSocketFactory = SSLSocketFactory.getDefault() as SSLSocketFactory
-
-        socketClient.setSocketFactory(socketFactory)
-        socketClient.connect()
-    }
-
-    //Creating Client WebSocket
-    private fun createWebSocket(coinbaseUri: URI?) {
-        socketClient = object : WebSocketClient(coinbaseUri) {
-
-            override fun onOpen(handshakedata: ServerHandshake?) {
-                Log.d(TAG, "onOpen")
-                subscribe()
-            }
-
-            override fun onMessage(message: String?) {
-                Log.d(TAG, "onMessage: $message")
-                setUpBtcPriceText(message)
-            }
-
-            override fun onClose(code: Int, reason: String?, remote: Boolean) {
-                Log.d(TAG, "onClose")
-                unsubscribe()
-            }
-
-            override fun onError(ex: Exception?) {
-                Log.e("createWebSocketClient", "onError: ${ex?.message}")
-            }
-
-        }
-    }
-
-
     // Parsing the response and setting the value into btn
     private fun setUpBtcPriceText(message: String?) {
 
@@ -244,51 +196,15 @@ class HomeFragment : Fragment() {
             val bitcoin = adapter.fromJson(message)
 
             getActivity()?.runOnUiThread {
-                balanceInUSD.text = convertBTCtoUSD( bitcoin?.price )
+                balanceInUSD.text = Utils.convertBTCtoUSD( bitcoin?.price, satoshis )
                 balanceInUSD.visibility = View.VISIBLE
             }
         }
     }
 
-
-    private fun convertBTCtoUSD(price:Double?) : String{
-
-        val balance = (price?.times(satoshis))?.div(BTC_IN_SATOSHIS)
-        Log.d(TAG, "convertBTCtoUSD | ${balance}")
-        val balanceRounded:String = String.format("%.2f", balance)
-
-        return "$balanceRounded $"
-
-    }
-
-
-    // Subscribing to coinbase
-    private fun subscribe() {
-        socketClient.send(
-            SUBSCRIBE_COINBASE_SCRIPT
-        )
-    }
-
-
-    private fun unsubscribe() {
-        try {
-            socketClient.send(
-                UNSUBSCRIBE_COINBASE_SCRIPT
-            )
-        } catch (e: WebsocketNotConnectedException) {
-            Log.e(TAG, "Websocket not connected")
-        } catch (e: Exception) {
-            Log.wtf(TAG, "Something horrible happened", e)
-        }
-    }
-
-
     override fun onDestroyView() {
-        if (socketStatus != null) {
-            unsubscribe()
-        }
-
         super.onDestroyView()
+        WebsocketHelper.destroy()
         _binding = null
     }
 }

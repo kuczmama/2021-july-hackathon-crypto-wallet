@@ -6,13 +6,17 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 
 
 class Utils {
+
     companion object {
+        val TAG = Utils::class.simpleName
+
         fun toast(context: Context, str: String, duration: Int = Toast.LENGTH_SHORT) : Unit {
             Toast.makeText(
                 context,
@@ -43,6 +47,13 @@ class Utils {
                 val notificationManager = NotificationManagerCompat.from(context)
                 notificationManager.notify(0, notification)
             }
+        }
+
+        fun convertBTCtoUSD(price:Double?, satoshis: Int) : String{
+            val balance = (price?.times(satoshis))?.div(Constants.BTC_IN_SATOSHIS)
+            Log.d(TAG, "convertBTCtoUSD | $balance")
+            val balanceRounded:String = String.format("%.2f", balance)
+            return "$balanceRounded $"
         }
     }
 }
