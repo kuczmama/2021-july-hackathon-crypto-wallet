@@ -9,6 +9,8 @@
     <color name="squidInk">#232F3E</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="lightGray">#bec4c7</color>
+    <color name="darkBlue">#283a46</color>
     <color name="brightYellow">#FFBC37</color>
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>

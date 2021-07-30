@@ -11,6 +11,7 @@ import android.widget.TextView
 import com.example.bitcoin.R
 import org.bitcoinj.core.Transaction
 import org.bitcoinj.wallet.Wallet
+import java.text.SimpleDateFormat
 
 
 class TransactionAdapter(
@@ -46,7 +47,9 @@ class TransactionAdapter(
 
         // Set date
         val txDate: TextView = view!!.findViewById(R.id.tx_date)
-        txDate.text = transaction.updateTime.toString()
+        val pattern = "yyyy-MM-dd"
+        val simpleDateFormat = SimpleDateFormat(pattern)
+        txDate.text = simpleDateFormat.format(transaction.updateTime)
 
         // Set amount
         val txAmountTextView: TextView = view.findViewById(R.id.tx_amount_btc)
