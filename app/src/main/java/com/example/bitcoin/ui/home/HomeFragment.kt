@@ -37,23 +37,25 @@ import javax.net.ssl.SSLSocketFactory
 
 class HomeFragment : Fragment() {
 
-    // This property is only valid between onCreateView and
-    // onDestroyView.
+    val TAG = HomeFragment::class.simpleName
+
+    // Fragment binding
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
-    private lateinit var client: WebSocketClient
 
+
+    // WebSocket
     private var socketStatus:String? = null
     private lateinit var socketClient: WebSocketClient
 
+    // Waller
+    private var walletAddress: Address? = null
+    private lateinit var wallet: Wallet
     private var satoshis: Int = 0
 
-    val TAG = HomeFragment::class.simpleName
-    private var walletAddress: Address? = null
+    // Views
     private lateinit var balanceText: TextView
     private lateinit var balanceInUSD: TextView
-    private lateinit var wallet: Wallet
-
     private lateinit var root: View
     private lateinit var transactionsListView: ListView
 
@@ -68,9 +70,8 @@ class HomeFragment : Fragment() {
         balanceText = root.findViewById(R.id.balanceText)
         balanceInUSD = root.findViewById(R.id.balanceInUSDText)
         transactionsListView = root.findViewById(R.id.transactionsListView)
-        init()
 
-        //initWebSocket()
+        init()
 
         return root
     }
@@ -258,8 +259,6 @@ class HomeFragment : Fragment() {
         return "${balanceRounded} $"
 
     }
-
-
 
 
     // Subscribing to coinbase
