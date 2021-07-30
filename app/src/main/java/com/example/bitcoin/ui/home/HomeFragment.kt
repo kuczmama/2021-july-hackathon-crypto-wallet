@@ -29,6 +29,7 @@ import org.bitcoinj.core.Transaction
 import org.bitcoinj.core.listeners.DownloadProgressTracker
 import org.bitcoinj.wallet.Wallet
 import org.java_websocket.client.WebSocketClient
+import org.java_websocket.exceptions.WebsocketNotConnectedException
 import org.java_websocket.handshake.ServerHandshake
 import java.lang.Exception
 import java.net.URI
@@ -252,11 +253,11 @@ class HomeFragment : Fragment() {
 
     private fun convertBTCtoUSD(price:Double?) : String{
 
-        var balance = (price?.times(satoshis))?.div(BTC_IN_SATOSHIS)
+        val balance = (price?.times(satoshis))?.div(BTC_IN_SATOSHIS)
         Log.d(TAG, "convertBTCtoUSD | ${balance}")
         val balanceRounded:String = String.format("%.2f", balance)
 
-        return "${balanceRounded} $"
+        return "$balanceRounded $"
 
     }
 
@@ -270,9 +271,15 @@ class HomeFragment : Fragment() {
 
 
     private fun unsubscribe() {
-        socketClient.send(
-            UNSUBSCRIBE_COINBASE_SCRIPT
-        )
+        try {
+            socketClient.send(
+                UNSUBSCRIBE_COINBASE_SCRIPT
+            )
+        } catch (e: WebsocketNotConnectedException) {
+            Log.e(TAG, "Websocket not connected")
+        } catch (e: Exception) {
+            Log.wtf(TAG, "Something horrible happened", e)
+        }
     }
 
 
