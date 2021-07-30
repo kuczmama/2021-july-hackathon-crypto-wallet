@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">Crypto Wallet</string>
-    <string name="title_activity_navigation">Crypto Wallet</string>
+    <string name="app_name">Fire Wallet</string>
+    <string name="title_activity_navigation">Fire Wallet</string>
     <string name="title_home">Home</string>
     <string name="title_receive">Receive</string>
     <string name="title_send">Send</string>
