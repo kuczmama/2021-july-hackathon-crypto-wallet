@@ -6,22 +6,39 @@
     android:orientation="vertical"
     tools:context=".ui.home.HomeFragment">
 
-    <TextView
-        android:id="@+id/balanceText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:gravity="center"
-        android:text="Loading your wallet data..."
-        android:textSize="50dp" />
+<!--    <LinearLayour-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_weight="1"-->
+<!--        android:orientation="vertical">-->
+
+        <TextView
+            android:id="@+id/balanceText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_weight="1"
+            android:text="Loading your wallet data..."
+            android:textSize="50dp" />
+
+        <TextView
+            android:id="@+id/balanceInUSDText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="__ $"
+            android:textSize="50dp" />
+
+<!--    </LinearLayour>-->
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Transaction History"
-        android:textColor="@color/black"
         android:layout_marginVertical="10dp"
         android:paddingLeft="20dp"
+        android:text="Transaction History"
+        android:textColor="@color/black"
         android:textSize="20dp" />
 
     <View
@@ -33,7 +50,7 @@
         android:id="@+id/transactionsListView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="2" />
+        android:layout_weight="4" />
 
 
 </LinearLayout>
