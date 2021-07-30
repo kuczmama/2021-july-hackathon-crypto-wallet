@@ -1,12 +1,16 @@
 package com.example.bitcoin.ui.send
 
+import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import android.text.TextUtils
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.*
+import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import com.budiyev.android.codescanner.AutoFocusMode
 import com.budiyev.android.codescanner.CodeScanner
@@ -81,7 +85,7 @@ class SendFragment : Fragment() {
         // Callbacks
         codeScanner.decodeCallback = DecodeCallback {
             activity?.runOnUiThread {
-                Toast.makeText(root.context, "Scan result: ${it.text}", Toast.LENGTH_LONG).show()
+                // Toast.makeText(root.context, "Scan result: ${it.text}", Toast.LENGTH_LONG).show()
 
                 sendAddress.setText(it.text)
 
@@ -118,6 +122,18 @@ class SendFragment : Fragment() {
         return root
     }
 
+    /**
+     * Parse between bitcoin addressed and bitcoin cash addresses
+     */
+    private fun parseAddress(address: String): String {
+        return if(address.startsWith("bitcoin:") || address.startsWith("bitcoincash:")) {
+            address.split(":")[1]
+        } else {
+            address
+        }
+    }
+
+
     private fun send(amount: Long, to: String) {
         if (TextUtils.isEmpty(to)) {
             Utils.toast(root.context, "Select Recipient")
@@ -137,7 +153,7 @@ class SendFragment : Fragment() {
         }
         val parameters: NetworkParameters? = if (Config.IS_PRODUCTION) MainNetParams.get() else TestNet3Params.get()
 
-        val toAddress: Address = Address.fromString(parameters, sendAddress.text.toString())
+        val toAddress: Address = Address.fromString(parameters, parseAddress(sendAddress.text.toString()))
         val request =
             SendRequest.to(toAddress, coinAmount)
         try {
@@ -158,6 +174,24 @@ class SendFragment : Fragment() {
             return
         }
         Utils.toast(root.context, "Successfully sent Bitcoin")
+
+        Utils.showNotification(
+            root.context,
+            "Send Successful",
+            "Sent ${coinAmount.toFriendlyString()} to $toAddress"
+        )
+
+        // Clear after sending
+        activity?.runOnUiThread {
+            sendAmount.text.clear()
+            sendAddress.text.clear()
+        }
+
+        // Hide keyboard
+        activity?.currentFocus?.let { view ->
+            val imm = root.context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+            imm?.hideSoftInputFromWindow(view.windowToken, 0)
+        }
      }
 
     override fun onDestroyView() {

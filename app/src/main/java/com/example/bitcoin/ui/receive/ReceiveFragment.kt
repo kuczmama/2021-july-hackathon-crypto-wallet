@@ -15,9 +15,12 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.bitcoin.R
+import com.example.bitcoin.Utils
 import com.example.bitcoin.WalletAppKitFactory
 import com.example.bitcoin.databinding.FragmentReceiveBinding
 import com.google.zxing.WriterException
+import org.bitcoinj.core.Coin
+import org.bitcoinj.core.Transaction
 import org.bitcoinj.wallet.Wallet
 
 class ReceiveFragment : Fragment() {
@@ -59,6 +62,17 @@ class ReceiveFragment : Fragment() {
         } catch (e: WriterException) {
 
             Log.v(TAG, e.toString())
+        }
+
+        Log.d(TAG, "Listen for receiving transactions: $publicKey")
+        wallet.addCoinsReceivedEventListener { wallet1: Wallet?, tx: Transaction, prevBalance: Coin?, newBalance: Coin ->
+            Log.d(TAG, "Tx received Balance: ${wallet.balance}")
+            if (tx.purpose == Transaction.Purpose.UNKNOWN) Utils.showNotification(root.context,
+                "Bitcoin Received ",
+                "You got " + newBalance.minus(
+                    prevBalance
+                ).toFriendlyString()
+            )
         }
 
 
